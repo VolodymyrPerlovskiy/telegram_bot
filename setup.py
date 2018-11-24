@@ -6,19 +6,27 @@ from telebot.types import Message
 TOKEN = '650974022:AAExqs8-SIWk99Hdqd4by7r1KUX7bvMhM3U'
 bot = telebot.TeleBot(TOKEN)
 
-@bot.message_handler(commands=['help'])
-def command_handler(message: Message):
-    bot.reply_to(message, 'Help command reply')
+USER = set()
+
 
 @bot.message_handler(commands=['start'])
-def command_handler(message: Message):
-    bot.reply_to(message, 'Start command reply')
+def send_start(message: Message):
+    bot.reply_to(message, "This is test bot.")
 
-@bot.message_handler(content_types=['text'])
-def message_handler(message: Message):
-    USER.add(message.from_user.id)
-    bot.reply_to(message, 'test_reply')
-    print(USER)
+
+@bot.message_handler(commands=['help'])
+def send_help(message: Message):
+    bot.send_message(message.chat.id, "Try to figure out by yourself!")
+
+
+@bot.edited_message_handler(content_types=['text'], func=lambda message: True)
+@bot.message_handler(content_types=['text'], func=lambda message: True)
+def reply_message(message: Message):
+    if message.from_user.id not in USER:
+        bot.send_message(message.chat.id, 'Hi, this is your first message! How are you?')
+        USER.add(message.from_user.id)
+    else:
+        bot.send_message(message.chat.id, 'What has changed since the previous time?')
 
 
 @bot.inline_handler(lambda query: len(query.query) > 0)
@@ -31,8 +39,8 @@ def query_text(query):
         input_message_content=types.InputTextMessageContent(message_text="Inline message"),
         reply_markup=keyboard
     )
-
     results.append(single_msg)
     bot.answer_inline_query(query.id, results)
 
-bot.polling()
+
+bot.polling(timeout=60)
